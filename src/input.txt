@@ -1,0 +1,11 @@
+6
+0 Fictive 0
+1 comander 20
+2 Demander 30
+3 mop 10
+4 Danser 3
+5 Nose 3
+3
+4 1
+4 3
+5 3

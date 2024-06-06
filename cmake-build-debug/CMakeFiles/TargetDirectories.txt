@@ -1,0 +1,3 @@
+C:/Users/azang/CLionProjects/pertroc/cmake-build-debug/CMakeFiles/pertroc.dir
+C:/Users/azang/CLionProjects/pertroc/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/azang/CLionProjects/pertroc/cmake-build-debug/CMakeFiles/rebuild_cache.dir

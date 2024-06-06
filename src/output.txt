@@ -1,0 +1,9 @@
+Durée totale du projet: 0
+Chemin critique:
+Tâche 0: 
+Tâche 0: 
+Tâche 0: 
+Tâches du projet:
+ID: 0, Nom: , Durée: 0, Date début: 0, Date fin: 0, Marge: 0
+ID: 0, Nom: , Durée: 0, Date début: 0, Date fin: 0, Marge: 0
+ID: 0, Nom: , Durée: 0, Date début: 0, Date fin: 0, Marge: 0
