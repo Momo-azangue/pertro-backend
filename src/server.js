@@ -71,6 +71,7 @@ app.get('/calculate-dates', (req, res) => {
     });
 
     fs.writeFileSync(inputFile, inputContent);
+    console.log("Contenu de input.txt:\n", inputContent);
 
     const pertPath = path.resolve(__dirname, 'C:\\Users\\azang\\CLionProjects\\pertroc\\pert');
 
@@ -85,7 +86,33 @@ app.get('/calculate-dates', (req, res) => {
         }
 
         const resultContent = fs.readFileSync(outputFile, 'utf-8');
-        res.send(resultContent);
+        console.log("Contenu de output.txt:\n", resultContent);
+        const resultLines = resultContent.split('\n').filter(line => line.trim() !== '');
+        const result = resultLines.map(line => {
+            const [id, nom, duree, debutT, finT, marge, critique] = line.split(' ');
+            return {
+                id: parseInt(id),
+                nom,
+                duree: parseInt(duree),
+                debutT: parseInt(debutT),
+                finT: parseInt(finT),
+                marge: parseInt(marge),
+                critique: critique === '0',
+            };
+        });
+
+        const filteredResult = result.filter(task => task.nom !== 'Fictive');
+
+        const formattedResult = filteredResult.map(task => {
+            const originalTask = tasks.find(t => t.id === task.id);
+            return {
+                ...task,
+                label: originalTask ? originalTask.label : 'N/A',
+                dependencies: relations.filter(r => r.id === task.id).map(r => tasks.find(t => t.id === r.predecesseur).label).join(', '),
+            };
+        });
+
+        res.send(formattedResult);
     });
 });
 

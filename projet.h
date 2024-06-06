@@ -28,5 +28,4 @@ int aDesCycles(Projet *projet);
 void lireEntrees(Projet *projet, const char *filename);
 void ecrireResultats(Projet *projet, const char *filename);
 
-
 #endif //PERTROC_PROJET_H

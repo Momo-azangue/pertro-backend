@@ -1,9 +1,4 @@
-Durée totale du projet: 0
-Chemin critique:
-Tâche 0: 
-Tâche 0: 
-Tâche 0: 
-Tâches du projet:
-ID: 0, Nom: , Durée: 0, Date début: 0, Date fin: 0, Marge: 0
-ID: 0, Nom: , Durée: 0, Date début: 0, Date fin: 0, Marge: 0
-ID: 0, Nom: , Durée: 0, Date début: 0, Date fin: 0, Marge: 0
+0 Fictive 0 0 0 50 0
+1 non 20 0 20 30 0
+2 con 10 20 30 20 0
+3 lon 30 20 50 0 1

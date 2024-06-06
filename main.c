@@ -1,107 +1,135 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "projet.h"
 
-/**
-void afficherProjet(Projet *projet) {
-    printf("Taches du projet:\n");
+typedef struct {
+    int id;
+    char nom[50];
+    int duree;
+    int dateDebut;
+    int dateFin;
+    int marge;
+} Tache;
+
+typedef struct {
+    int id;
+    int predecesseur;
+} Relation;
+
+typedef struct {
+    Tache taches[100];
+    int nbTaches;
+    Relation relations[100];
+    int nbRelations;
+} Projet;
+
+Projet creerProjet() {
+    Projet projet;
+    projet.nbTaches = 0;
+    projet.nbRelations = 0;
+    return projet;
+}
+
+void ajouterTache(Projet *projet, Tache tache) {
+    projet->taches[projet->nbTaches++] = tache;
+}
+
+void ajouterRelation(Projet *projet, Relation relation) {
+    projet->relations[projet->nbRelations++] = relation;
+}
+
+void lireInput(Projet *projet, FILE *input) {
+    int nbTaches, nbRelations;
+    fscanf(input, "%d", &nbTaches);
+    for (int i = 0; i < nbTaches; i++) {
+        Tache tache;
+        fscanf(input, "%d %s %d", &tache.id, tache.nom, &tache.duree);
+        ajouterTache(projet, tache);
+    }
+    fscanf(input, "%d", &nbRelations);
+    for (int i = 0; i < nbRelations; i++) {
+        Relation relation;
+        fscanf(input, "%d %d", &relation.id, &relation.predecesseur);
+        ajouterRelation(projet, relation);
+    }
+}
+
+void calculerDates(Projet *projet) {
     for (int i = 0; i < projet->nbTaches; i++) {
-        printf("ID: %d, Nom: %s, Duree: %d, Date debut: %d, Date fin: %d, Marge: %d\n",
+        projet->taches[i].dateDebut = 0;
+        projet->taches[i].dateFin = projet->taches[i].duree;
+    }
+    for (int i = 0; i < projet->nbRelations; i++) {
+        int id = projet->relations[i].id;
+        int predecesseur = projet->relations[i].predecesseur;
+        for (int j = 0; j < projet->nbTaches; j++) {
+            if (projet->taches[j].id == id) {
+                for (int k = 0; k < projet->nbTaches; k++) {
+                    if (projet->taches[k].id == predecesseur) {
+                        if (projet->taches[k].dateFin > projet->taches[j].dateDebut) {
+                            projet->taches[j].dateDebut = projet->taches[k].dateFin;
+                            projet->taches[j].dateFin = projet->taches[j].dateDebut + projet->taches[j].duree;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    int dureeTotale = 0;
+    for (int i = 0; i < projet->nbTaches; i++) {
+        if (projet->taches[i].dateFin > dureeTotale) {
+            dureeTotale = projet->taches[i].dateFin;
+        }
+    }
+    for (int i = 0; i < projet->nbTaches; i++) {
+        projet->taches[i].marge = dureeTotale - projet->taches[i].dateFin;
+    }
+    printf("Durée totale du projet: %d\n", dureeTotale);
+}
+
+void afficherResultat(Projet *projet) {
+    printf("Chemin critique:\n");
+    for (int i = 0; i < projet->nbTaches; i++) {
+        if (projet->taches[i].marge == 0) {
+            printf("Tâche %d: %s\n", projet->taches[i].id, projet->taches[i].nom);
+        }
+    }
+    printf("Tâches du projet:\n");
+    for (int i = 0; i < projet->nbTaches; i++) {
+        printf("ID: %d, Nom: %s, Durée: %d, Date début: %d, Date fin: %d, Marge: %d\n",
                projet->taches[i].id, projet->taches[i].nom, projet->taches[i].duree,
                projet->taches[i].dateDebut, projet->taches[i].dateFin, projet->taches[i].marge);
     }
 }
 
-int main() {
-    Projet projet = creerProjet();
-    int nbTaches, nbRelations;
-
-    printf("Entrez le nombre de taches: ");
-    scanf("%d", &nbTaches);
-    getchar();  // Clear the newline character from the buffer
-
-    for (int i = 0; i < nbTaches; i++) {
-        int id, duree;
-        char nom[50];
-
-        printf("Entrez l'ID de la tache %d: ", i + 1);
-        scanf("%d", &id);
-        getchar();  // Clear the newline character from the buffer
-
-        printf("Entrez le nom de la tache %d: ", i + 1);
-        fgets(nom, sizeof(nom), stdin);
-        // Remove newline character from fgets
-        nom[strcspn(nom, "\n")] = 0;
-
-        printf("Entrez la duree de la tache %d: ", i + 1);
-        scanf("%d", &duree);
-        getchar();  // Clear the newline character from the buffer
-
-        Tache tache = creerTache(id, nom, duree);
-        ajouterTache(&projet, tache);
+int main(int argc, char *argv[]) {
+    if (argc != 3) {
+        fprintf(stderr, "Usage: %s <input file> <output file>\n", argv[0]);
+        return 1;
     }
-
-    printf("Entrez le nombre de relations de precedence: ");
-    scanf("%d", &nbRelations);
-    getchar();  // Clear the newline character from the buffer
-
-    for (int i = 0; i < nbRelations; i++) {
-        int id, predecesseur;
-
-        printf("Entrez l'ID de la tache dependante pour la relation %d: ", i + 1);
-        scanf("%d", &id);
-        getchar();  // Clear the newline character from the buffer
-
-        printf("Entrez l'ID de la tache precedence pour la relation %d: ", i + 1);
-        scanf("%d", &predecesseur);
-        getchar();  // Clear the newline character from the buffer
-
-        ajouterRelation(&projet, id, predecesseur);
-    }
-
-    if (aDesCycles(&projet)) {
-        printf("Erreur : Le projet contient des cycles de dependance.\n");
+    FILE *input = fopen(argv[1], "r");
+    if (input == NULL) {
+        perror("Erreur lors de l'ouverture du fichier d'entrée");
         return 1;
     }
 
-    calculerDates(&projet);
-
-    printf("Duree totale du projet: %d\n", getDureeTotale(&projet));
-
-    Tache cheminCritique[100];
-    int nbCheminCritique;
-    getCheminCritique(&projet, cheminCritique, &nbCheminCritique);
-
-    printf("Chemin critique:\n");
-    for (int i = 0; i < nbCheminCritique; i++) {
-        printf("Tache %d: %s\n", cheminCritique[i].id, cheminCritique[i].nom);
-    }
-
-    afficherProjet(&projet);
-
-    return 0;
-}
-**/
-
-
-
-int main(int argc, char *argv[]) {
-    if (argc != 3) {
-        fprintf(stderr, "Usage: %s <input_file> <output_file>\n", argv[0]);
-        exit(EXIT_FAILURE);
-    }
-
     Projet projet = creerProjet();
-    lireEntrees(&projet, argv[1]);
-
-    if (aDesCycles(&projet)) {
-        fprintf(stderr, "Erreur : Le projet contient des cycles de dépendance.\n");
-        exit(EXIT_FAILURE);
-    }
+    lireInput(&projet, input);
+    fclose(input);
 
     calculerDates(&projet);
-    ecrireResultats(&projet, argv[2]);
 
+    FILE *output = fopen(argv[2], "w");
+    if (output == NULL) {
+        perror("Erreur lors de l'ouverture du fichier de sortie");
+        return 1;
+    }
+    for (int i = 0; i < projet.nbTaches; i++) {
+        fprintf(output, "%d %s %d %d %d %d %d\n",
+                projet.taches[i].id, projet.taches[i].nom, projet.taches[i].duree,
+                projet.taches[i].dateDebut, projet.taches[i].dateFin, projet.taches[i].marge,
+                projet.taches[i].marge == 0 ? 1 : 0);
+    }
+    fclose(output);
     return 0;
 }

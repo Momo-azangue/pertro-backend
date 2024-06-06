@@ -3,9 +3,6 @@
 #include <stdlib.h>
 #include "projet.h"
 
-
-
-
 // Fonctions pour lire les entrées depuis un fichier
 void lireEntrees(Projet *projet, const char *filename) {
     FILE *file = fopen(filename, "r");
@@ -61,9 +58,6 @@ void ecrireResultats(Projet *projet, const char *filename) {
 
     fclose(file);
 }
-
-
-
 
 Projet creerProjet() {
     Projet projet;
