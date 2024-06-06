@@ -97,7 +97,7 @@ app.get('/calculate-dates', (req, res) => {
                 debutT: parseInt(debutT),
                 finT: parseInt(finT),
                 marge: parseInt(marge),
-                critique: critique === '0',
+                critique: critique === '1',
             };
         });
 
