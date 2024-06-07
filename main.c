@@ -1,14 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#define INT_MAX 1000
 
 typedef struct {
     int id;
     char nom[50];
     int duree;
-    int dateDebut;
-    int dateFin;
+    int dateDebut;  // EST (Earliest Start Time)
+    int dateFin;    // LFT (Latest Finish Time)
     int marge;
+    int critique;   // 1 if the task is critical, otherwise 0
 } Tache;
 
 typedef struct {
@@ -55,10 +57,13 @@ void lireInput(Projet *projet, FILE *input) {
 }
 
 void calculerDates(Projet *projet) {
+    // Initialisation des dates au plus tôt (EST) et au plus tard (LFT)
     for (int i = 0; i < projet->nbTaches; i++) {
         projet->taches[i].dateDebut = 0;
-        projet->taches[i].dateFin = projet->taches[i].duree;
+        projet->taches[i].dateFin = INT_MAX;  // Initialiser avec un grand nombre
     }
+
+    // Calcul des dates au plus tôt (EST)
     for (int i = 0; i < projet->nbRelations; i++) {
         int id = projet->relations[i].id;
         int predecesseur = projet->relations[i].predecesseur;
@@ -66,39 +71,69 @@ void calculerDates(Projet *projet) {
             if (projet->taches[j].id == id) {
                 for (int k = 0; k < projet->nbTaches; k++) {
                     if (projet->taches[k].id == predecesseur) {
-                        if (projet->taches[k].dateFin > projet->taches[j].dateDebut) {
-                            projet->taches[j].dateDebut = projet->taches[k].dateFin;
-                            projet->taches[j].dateFin = projet->taches[j].dateDebut + projet->taches[j].duree;
+                        int est = projet->taches[k].dateDebut + projet->taches[k].duree;
+                        if (est > projet->taches[j].dateDebut) {
+                            projet->taches[j].dateDebut = est;
                         }
                     }
                 }
             }
         }
     }
+
+    // Calcul des dates au plus tard (LFT)
     int dureeTotale = 0;
     for (int i = 0; i < projet->nbTaches; i++) {
-        if (projet->taches[i].dateFin > dureeTotale) {
-            dureeTotale = projet->taches[i].dateFin;
+        int fin = projet->taches[i].dateDebut + projet->taches[i].duree;
+        if (fin > dureeTotale) {
+            dureeTotale = fin;
         }
     }
     for (int i = 0; i < projet->nbTaches; i++) {
-        projet->taches[i].marge = dureeTotale - projet->taches[i].dateFin;
+        if (projet->taches[i].dateFin == INT_MAX) {
+            projet->taches[i].dateFin = dureeTotale;
+        }
     }
+
+    for (int i = projet->nbRelations - 1; i >= 0; i--) {
+        int id = projet->relations[i].id;
+        int successeur = projet->relations[i].predecesseur;
+        for (int j = 0; j < projet->nbTaches; j++) {
+            if (projet->taches[j].id == id) {
+                for (int k = 0; k < projet->nbTaches; k++) {
+                    if (projet->taches[k].id == successeur) {
+                        int lft = projet->taches[j].dateFin - projet->taches[j].duree;
+                        if (lft < projet->taches[k].dateFin) {
+                            projet->taches[k].dateFin = lft;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Calcul des marges et identification des tâches critiques
+    for (int i = 0; i < projet->nbTaches; i++) {
+        projet->taches[i].marge = (projet->taches[i].dateFin - (projet->taches[i].dateDebut + projet->taches[i].duree)) ;
+        projet->taches[i].critique = (projet->taches[i].marge == 0) ? 1 : 0;
+    }
+
     printf("Durée totale du projet: %d\n", dureeTotale);
 }
 
 void afficherResultat(Projet *projet) {
     printf("Chemin critique:\n");
     for (int i = 0; i < projet->nbTaches; i++) {
-        if (projet->taches[i].marge == 0) {
+        if (projet->taches[i].critique) {
             printf("Tâche %d: %s\n", projet->taches[i].id, projet->taches[i].nom);
         }
     }
     printf("Tâches du projet:\n");
     for (int i = 0; i < projet->nbTaches; i++) {
-        printf("ID: %d, Nom: %s, Durée: %d, Date début: %d, Date fin: %d, Marge: %d\n",
+        printf("ID: %d, Nom: %s, Durée: %d, Date début au plus tôt: %d, Date fin au plus tard: %d, Marge: %d, Critique: %s\n",
                projet->taches[i].id, projet->taches[i].nom, projet->taches[i].duree,
-               projet->taches[i].dateDebut, projet->taches[i].dateFin, projet->taches[i].marge);
+               projet->taches[i].dateDebut, projet->taches[i].dateFin,
+               projet->taches[i].marge, projet->taches[i].critique ? "Oui" : "Non");
     }
 }
 
@@ -125,10 +160,11 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     for (int i = 0; i < projet.nbTaches; i++) {
-        fprintf(output, "%d %s %d %d %d %d %d\n",
+        fprintf(output, "%d %s %d %d %d %d %d %d\n",
                 projet.taches[i].id, projet.taches[i].nom, projet.taches[i].duree,
-                projet.taches[i].dateDebut, projet.taches[i].dateFin, projet.taches[i].marge,
-                projet.taches[i].marge == 0 ? 1 : 0);
+                projet.taches[i].dateDebut, projet.taches[i].dateFin - projet.taches[i].duree,
+                projet.taches[i].dateDebut + projet.taches[i].duree, projet.taches[i].dateFin,
+                projet.taches[i].marge);
     }
     fclose(output);
     return 0;

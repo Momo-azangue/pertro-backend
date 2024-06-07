@@ -97,7 +97,7 @@ app.get('/calculate-dates', (req, res) => {
                 debutT: parseInt(debutT),
                 finT: parseInt(finT),
                 marge: parseInt(marge),
-                critique: critique === '1',
+                critique: critique === '0',
             };
         });
 
@@ -112,9 +112,12 @@ app.get('/calculate-dates', (req, res) => {
             };
         });
 
-        res.send(formattedResult);
+        const dureeTotale = Math.max(...formattedResult.map(task => task.finT));
+
+        res.send({ tasks: formattedResult, dureeTotale });
     });
 });
+
 
 app.listen(port, () => {
     console.log(`Serveur en cours d'exécution sur http://localhost:${port}`);
